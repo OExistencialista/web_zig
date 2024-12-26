@@ -1,22 +1,21 @@
 const std = @import("std");
 const net = std.net;
-const actions = @import("actions.zig");
 const Request = @import("root.zig").Request;
 const Method = @import("root.zig").Method;
 const View = @import("root.zig").View;
 
 pub const ServerConfig = struct {
     address: []const u8,
-    port: u16,  
+    port: u16,
     pagesPath: []const u8,
 };
 
 pub const Server = struct {
-        allocator: std.mem.Allocator,
-        port: u16,
-        address: []const u8,
-        listener: net.Server,
-    pagesPath: []const u8,  
+    allocator: std.mem.Allocator,
+    port: u16,
+    address: []const u8,
+    listener: net.Server,
+    pagesPath: []const u8,
 
     fn handleConnection(self: *Server) !void {
         const conn = try self.listener.accept();
@@ -26,9 +25,7 @@ pub const Server = struct {
         const read_result = try reader.read(buffer[0..]);
 
         const request = try parseRequest(buffer[0..read_result]);
-        std.debug.print("{any} \n{s} \n{s}\n", .{ request.method, request.path, request.version });
 
-        
         const response = try self.get_response(request);
 
         try conn.stream.writeAll(response);
@@ -45,35 +42,26 @@ pub const Server = struct {
     pub fn deinit(self: *Server) void {
         std.debug.print("Server stopped on {s}:{d}\n", .{ self.address, self.port });
         self.listener.deinit();
-    }   
-
-    const mimes = .{ 
-    .{ "html", "text/html" }, 
-    .{ "css", "text/css" }, 
-    .{ "map", "application/json" }, 
-    .{ "svg", "image/svg+xml" }, 
-    .{ "jpg", "image/jpg" }, 
-    .{ "png", "image/png" } 
-};
-
-fn get_mime(path: []const u8) []const u8 {
-    var split = std.mem.split(u8, path[0..], ".");
-    _ = split.next().?;
-    const extension = split.next().?;
-    inline for (mimes) |entry| {
-        if (std.mem.eql(u8, entry[0], extension)) {
-            return entry[1];
-        }
     }
-    return "text/plain";
-}
 
+    const mimes = .{ .{ "html", "text/html" }, .{ "css", "text/css" }, .{ "map", "application/json" }, .{ "svg", "image/svg+xml" }, .{ "jpg", "image/jpg" }, .{ "png", "image/png" } };
 
+    fn get_mime(path: []const u8) []const u8 {
+        var split = std.mem.split(u8, path[0..], ".");
+        _ = split.next().?;
+        const extension = split.next().?;
+        inline for (mimes) |entry| {
+            if (std.mem.eql(u8, entry[0], extension)) {
+                return entry[1];
+            }
+        }
+        return "text/plain";
+    }
 
     fn get_response(self: *Server, request: Request) ![]const u8 {
         switch (request.method) {
             Method.GET => {
-                const page = try actions.GET(request.path, self.pagesPath);
+                const page = "teste teste";
                 return std.fmt.allocPrint(self.allocator, "HTTP/1.1 200 OK\r\nContent-Type: {s}\r\nContent-Length: {d}\r\n\r\n{s}", .{ get_mime(request.path), page.len, page });
             },
             else => {
@@ -81,9 +69,6 @@ fn get_mime(path: []const u8) []const u8 {
             },
         }
     }
-
-
-
 };
 
 pub fn init_server(config: ServerConfig, allocator: std.mem.Allocator) !Server {
@@ -98,7 +83,6 @@ pub fn init_server(config: ServerConfig, allocator: std.mem.Allocator) !Server {
     };
 }
 
-
 fn parseRequest(buffer: []const u8) !Request {
     var lines = std.mem.split(u8, buffer, "\r\n");
     lines.reset();
@@ -112,7 +96,6 @@ fn parseRequest(buffer: []const u8) !Request {
         path = "/index.html";
     }
 
-
     const version = parts.next().?;
 
     const headers = lines.next().?;
@@ -124,8 +107,6 @@ fn parseRequest(buffer: []const u8) !Request {
         .headers = headers,
     };
 }
-
-
 
 fn method_map(method: []const u8) !Method {
     const methodMap = .{
