@@ -3,6 +3,7 @@ const net = std.net;
 const Request = @import("root.zig").Request;
 const Method = @import("root.zig").Method;
 const View = @import("root.zig").View;
+const db = @import("db_connector.zig");
 
 pub const ServerConfig = struct {
     address: []const u8,
@@ -35,6 +36,17 @@ pub const Server = struct {
 
     pub fn start(self: *Server) !void {
         std.debug.print("Server started on {s}:{d}\n", .{ self.address, self.port });
+
+        std.debug.print("teste", .{});
+
+        const db_config = db.db_conn_config{
+            .alloc = self.allocator,
+            .conn_string = "host=/run/postgresql dbname=teste user=pedro password=123456",
+        };
+        var db_conn = try db.db_connection.init(db_config);
+        defer db_conn.deinit();
+        const result = try db_conn.raw_query("SELECT * FROM testes");
+        std.debug.print("result: {s}\n", .{result});
 
         try self.handleConnection();
     }

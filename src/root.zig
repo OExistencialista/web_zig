@@ -27,12 +27,3 @@ pub const Method = enum {
     TRACE,
     CONNECT,
 };
-pub const View = struct {
-    page : []u8,
-    page_len : u32,
-    model :  std.json.Value
-
-};
-
-
-
